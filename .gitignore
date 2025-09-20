@@ -1,0 +1,8 @@
+# IGNORE THESE FILES
+.env
+
+# IGNORE EVERYTHING IN THESE FOLDERS BUT KEEP THE FOLDERS
+data/*
+logs/*
+!logs/.gitkeep
+!data/**/.gitkeep
