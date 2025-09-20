@@ -59,8 +59,10 @@ def main():
     else:
         raise ValueError("args.shots must be zs or fs")
 
+    print_prompt = True
     for item in tqdm(data, desc="Processing items"):
-        logger.info(f"Processing item: {item}")
+
+        # logger.info(f"Processing item: {item}")
 
         classes = [str(c) for c in item["options"].values()]
         
@@ -88,8 +90,10 @@ def main():
             prior_knowledge="",   
             hint="please think step by step",
             real_call=True,                     # set False for dry-run structure
-            debug=args.debug_prints
+            debug=args.debug_prints,
+            print_prompt=print_prompt           # only do this for the first prompt (to see structure)
         )
+        print_prompt = False
         save_output(args, out_row)
 
     logger.info("Processing complete.")

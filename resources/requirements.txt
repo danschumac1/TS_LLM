@@ -16,6 +16,7 @@ protobuf
 sentencepiece
 soundfile
 matplotlib
+sktime
 # remember to run
 # hf auth login
 # export PYTHONPATH=$(pwd)

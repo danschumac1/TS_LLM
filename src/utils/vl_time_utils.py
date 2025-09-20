@@ -33,6 +33,8 @@ import numpy as np
 
 # Use non-interactive backend for headless servers
 import matplotlib
+
+from utils.logging_utils import MasterLogger
 matplotlib.use("Agg")
 import matplotlib.pyplot as plt
 
@@ -243,11 +245,6 @@ def read_aiff_series_as_string(index: str, prefix: str, folder_path: str = "./Da
 # Plotting: generate image on-the-fly
 # ====================================
 
-import os
-import re
-from typing import Dict, Any
-import matplotlib.pyplot as plt
-
 def _dim_sort_key(k: str) -> int:
     """Sort dims like dim_0, dim_1, ... numerically; unknowns go last."""
     m = re.match(r"^dim_(\d+)$", str(k))
@@ -382,7 +379,8 @@ def build_prompt_V(
     prior_knowledge: str,
     hint: str,
     demo_tuples: List[Tuple[str, str, str, str]],  # (idx, class_desc, values_str, img_path)
-    test_idx: str
+    test_idx: str, # have to leave this so consistant (even though it is not accessed)
+    print_prompt:bool = False
 ) -> Tuple[str, List[str]]:
     """
     Vision-only prompt: uses image blocks + label answers for demos; then asks the test question.
@@ -417,6 +415,11 @@ def build_prompt_V(
         "---END FORMAT TEMPLATE FOR QUESTION 1---\n\n"
         "Do not deviate from the above format. Repeat the format template for the answer.\n"
     )
+    if print_prompt:
+        logger = MasterLogger.get_instance()
+        logger.info(prompt)
+        print(prompt)
+
     return prompt, image_paths
 
 
@@ -427,7 +430,8 @@ def build_prompt_LV(
     prior_knowledge: str,
     hint: str,
     demo_tuples: List[Tuple[str, str, str, str]],  # (idx, class_desc, values_str, img_path)
-    test_values_str: str
+    test_values_str: str,
+    print_prompt:bool = False
 ) -> Tuple[str, List[str]]:
     """
     Vision + Values prompt: same as original LV template.
@@ -461,6 +465,12 @@ def build_prompt_LV(
         "---END FORMAT TEMPLATE FOR QUESTION 1---\n\n"
         "Do not deviate from the above format. Repeat the format template for the answer.\n"
     )
+
+    if print_prompt:
+        logger = MasterLogger.get_instance()
+        logger.info(prompt)
+        print(prompt)
+
     return prompt, image_paths
 
 
@@ -470,7 +480,8 @@ def build_prompt_L(
     prior_knowledge: str,
     hint: str,
     demo_tuples: List[Tuple[str, str, str, str]],  # (idx, class_desc, values_str, img_path) (img ignored)
-    test_values_str: str
+    test_values_str: str,
+    print_prompt:bool = False
 ) -> Tuple[str, List[str]]:
     """
     Values-only prompt (no images inserted).
@@ -502,6 +513,12 @@ def build_prompt_L(
         "---END FORMAT TEMPLATE FOR QUESTION 1---\n\n"
         "Do not deviate from the above format. Repeat the format template for the answer.\n"
     )
+
+    if print_prompt:
+        logger = MasterLogger.get_instance()
+        logger.info(prompt)
+        print(prompt)
+
     return prompt, []  # no images
 
 #endregion
@@ -587,7 +604,8 @@ def work(
 
     # controls
     real_call: bool = True,
-    debug: bool = False
+    debug: bool = False,
+    print_prompt = False
 ) -> Dict:
     """
     Row-wise processing for a single JSONL item of the form in your example.
@@ -642,7 +660,8 @@ def work(
             prior_knowledge=prior_knowledge,
             hint=hint,
             demo_tuples=demo_tuples,
-            test_idx=test_idx
+            test_idx=test_idx,
+            print_prompt=print_prompt
         )
         # Append test image path at end (after demos)
         image_paths = list(image_paths) + [test_img_path]
@@ -655,7 +674,8 @@ def work(
             prior_knowledge=prior_knowledge,
             hint=hint,
             demo_tuples=demo_tuples,
-            test_values_str=test_values_str
+            test_values_str=test_values_str,
+            print_prompt=print_prompt
         )
         image_paths = list(image_paths) + [test_img_path]
 
@@ -666,7 +686,8 @@ def work(
             prior_knowledge=prior_knowledge,
             hint=hint,
             demo_tuples=demo_tuples,
-            test_values_str=test_values_str
+            test_values_str=test_values_str,
+            print_prompt=print_prompt
         )
         image_paths = []  # values-only
 
