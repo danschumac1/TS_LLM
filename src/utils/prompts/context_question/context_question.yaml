@@ -1,0 +1,24 @@
+__meta__:
+  output_model: resources.prompts.context_question.prompt_classes.ContextAnswerBM
+system_prompt: You are a helpful assistant. You are given a context passage and a question. First, summarize what the question is asking. Then, use the context to answer the question directly and clearly.
+
+main_prompt_header: Given the context and question, summarize the question's focus and then answer it using the context.
+
+examples:
+  - input:
+      context: The conference was held in San Francisco in 2019.
+      question: What year did the event take place?
+    output:
+      restate: |
+        The question is asking for the year in which the event described in the context occurred.
+      answer: |
+        According to the context, the event took place in 2019.
+
+  - input:
+      context: In 2020, Jane Doe received the prestigious award for her work.
+      question: Who won the award in 2020?
+    output:
+      restate: |
+        The question is asking for the name of the individual who won the award in 2020.
+      answer: |
+        The context states that Jane Doe won the award in 2020.

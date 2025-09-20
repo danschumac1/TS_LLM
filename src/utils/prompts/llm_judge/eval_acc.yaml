@@ -1,0 +1,58 @@
+__meta__:
+  output_model: str
+system_prompt: |
+  You are a helpful assistant. You will be given a question and two answers to that question.
+  Your job is to determine whether the two answers are practically the same. 
+  "Practically the same" means they convey the same core idea or conclusion, even if they use different wording or levels of detail.
+  
+  You should ignore differences in phrasing, punctuation, and formatting.
+  Only mark them as "different" if the answers contradict one another, contain different final values, or convey different meanings.
+  
+  Your final answer must be one of the following:
+    - YES (the answers are practically the same)
+    - NO (the answers are different)
+
+main_prompt_header: |
+  Are these answers practically the same? Return with a single word 'true' or 'false' do not include 
+  any other tokens in your output.
+
+examples:
+  - input:
+      question: |
+        The following data represents ECG (Electrocardiogram) signals, which record the electrical activity of the heart during each heartbeat and serve as an important tool for diagnosing heart diseases. Using a signal sampled at a frequency of 500 Hz, we can determine whether abnormalities are present in the human body. The input Time Serie is [4.06, 2.86, 2.73, 3.61, 3.27, 2.23, 1.05, 0.24, -0.18, -0.34, -0.39, -0.47, -0.54, -0.58, -0.62, -0.64, -0.77, -0.86, -0.95, -1.08, -1.18, -1.27, -1.38, -1.5, -1.65, -1.81, -1.92, -2.02, -2.07, -2.06, -1.99, -1.84, -1.61, -1.35, -1.03, -0.74, -0.51, -0.32, -0.2, -0.15, -0.1, -0.07, -0.05, -0.06, -0.05, -0.05, -0.05, -0.04, -0.03, -0.05, -0.03, -0.04, -0.05, -0.03, -0.01, -0.01, -0.01, -0.01, -0.01, -0.01, -0.01, 0.01, 0.0, -0.02]. Please determine whether there are anomalies in this time series given information above.
+      answer_1: |
+        Yes, there are anomalies in this time series.
+      answer_2: |
+        Based on the given information, this time series includes Anomaly Point.
+    output: |
+      true
+
+  - input:
+      question: |
+        This dataset captures gait freezing using wearable accelerometers placed on the ankle (lower leg), thigh (above the knee), and hip, with 3D acceleration data recorded at 64 Hz. It includes nine measurements (following the order): horizontal forward, vertical, and horizontal lateral accelerations for the ankle (lower leg); horizontal forward, vertical, and horizontal lateral accelerations for the thigh; and horizontal forward, vertical, and horizontal lateral accelerations for the hip, all expressed in milligrams (mg). The input Time Serie is [989, 2009, 336, -118, 722, 282, -77, 876, -19]. Please judge whether this data corresponds to No freeze or Freeze. given information above.
+      answer_1: |
+        No freeze.
+      answer_2: |
+        Based on the given information, the answer is No freeze.
+    output: |
+      true
+
+  - input:
+      question: |
+        The following data represents ECG (Electrocardiogram) signals, which record the electrical activity of the heart during each heartbeat and serve as an important tool for diagnosing heart diseases. Using a signal sampled at a frequency of 500 Hz, we can determine whether abnormalities are present in the human body. The input Time Serie is [4.06, 2.86, 2.73, 3.61, 3.27, 2.23, 1.05, 0.24, -0.18, -0.34, -0.39, -0.47, -0.54, -0.58, -0.62, -0.64, -0.77, -0.86, -0.95, -1.08, -1.18, -1.27, -1.38, -1.5, -1.65, -1.81, -1.92, -2.02, -2.07, -2.06, -1.99, -1.84, -1.61, -1.35, -1.03, -0.74, -0.51, -0.32, -0.2, -0.15, -0.1, -0.07, -0.05, -0.06, -0.05, -0.05, -0.05, -0.04, -0.03, -0.05, -0.03, -0.04, -0.05, -0.03, -0.01, -0.01, -0.01, -0.01, -0.01, -0.01, -0.01, 0.01, 0.0, -0.02]. Please determine whether there are anomalies in this time series given information above.
+      answer_1: |
+        There are no anomalies in this time series. The values appear to follow a regular decreasing pattern with minor fluctuations.
+      answer_2: |
+        Based on the given information, this time series includes Anomaly Point.
+    output: |
+      false
+
+  - input:
+      question: |
+        This dataset captures gait freezing using wearable accelerometers placed on the ankle (lower leg), thigh (above the knee), and hip, with 3D acceleration data recorded at 64 Hz. It includes nine measurements (following the order): horizontal forward, vertical, and horizontal lateral accelerations for the ankle (lower leg); horizontal forward, vertical, and horizontal lateral accelerations for the thigh; and horizontal forward, vertical, and horizontal lateral accelerations for the hip, all expressed in milligrams (mg). The input Time Serie is [989, 2009, 336, -118, 722, 282, -77, 876, -19]. Please judge whether this data corresponds to No freeze or Freeze. given information above.
+      answer_1: |
+        No freeze.
+      answer_2: |
+        Freeze detected in the gait pattern based on signal irregularities.
+    output: |
+      false
