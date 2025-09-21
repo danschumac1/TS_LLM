@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# 22341
+# 75209
 # to run:
 #   chmod +x ./bin/method/vl_time.sh
 #   ./bin/method/vl_time.sh
@@ -74,7 +74,7 @@ for dataset in "${datasets[@]}"; do
             # Ensure output directory exists
             mkdir -p "$(dirname "${output_path}")"
 
-            python ./src/vl_time.py \
+            python ./src/method/vl_time.py \
               --input_path "${input_path}" \
               --output_path "${output_path}" \
               --model_type "${model_type}" \

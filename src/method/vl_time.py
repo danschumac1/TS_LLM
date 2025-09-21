@@ -7,6 +7,9 @@
 
 
 # STANDARD IMPORTS
+import sys
+sys.path.append("./src")
+
 import argparse
 import os
 from typing import Tuple, List
@@ -22,7 +25,7 @@ from utils.vl_time_utils import work
 
 def set_up() -> Tuple[List[dict], argparse.Namespace, MasterLogger]:
     # set up logger and args
-    logger = MasterLogger(log_path="./logs/vl_time.log", init=True, clear=True)
+    logger = MasterLogger(log_path="./logs/method/vl_time.log", init=True, clear=True)
     args = vl_time_parse_args()
     logger.info(f"Arguments: {args}")
 

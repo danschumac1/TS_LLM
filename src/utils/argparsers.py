@@ -56,3 +56,22 @@ def vl_time_parse_args():
     )
     return parser.parse_args()
 
+
+def knn_parse_args() -> argparse.Namespace:
+    p = argparse.ArgumentParser()
+    # paths
+    p.add_argument("--input_path", required=True)
+    p.add_argument("--train_path", required=False, default=None,
+                   help="If omitted, will try to derive by replacing '/test.jsonl' with '/train.jsonl'")
+    p.add_argument("--output_path", required=True)
+
+    # light controls (no hyperparameters)
+    p.add_argument("--cv_folds", type=int, default=5, help="Cross-validation folds for tuning")
+    p.add_argument("--scoring", type=str, default="accuracy", choices=["accuracy", "macro_f1"])
+    p.add_argument("--seed", type=int, default=66)
+    p.add_argument("--n_jobs", type=int, default=-1)
+
+    # compatibility/debug flags
+    p.add_argument("--debug", type=int, default=0)
+    p.add_argument("--debug_prints", type=int, default=0)
+    return p.parse_args()

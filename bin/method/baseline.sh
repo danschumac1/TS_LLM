@@ -86,7 +86,7 @@ for "$dataset" in "${datasets[@]}"; do
             # Ensure output directory exists
             mkdir -p "$(dirname "${output_path}")"
 
-            python ./src/baseline.py \
+            python ./src/method/baseline.py \
               --input_path "${input_path}" \
               --prompt_path "${prompt_path}" \
               --output_path "${output_path}" \

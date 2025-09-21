@@ -2,8 +2,8 @@
 # Evaluate all kNN generations under a dataset/subset, per split.
 # to run:
 #   chmod +x ./bin/eval/knn_eval.sh
-#   ./bin/knn_eval.sh
-#   nohup ./bin/knn_eval.sh > ./logs/knn_eval_nohup.log 2>&1 &
+#   ./bin/eval/knn_eval.sh
+#   nohup ./bin/eval/knn_eval.sh > ./logs/eval/knn_eval_nohup.log 2>&1 &
 
 set -euo pipefail
 
@@ -45,16 +45,14 @@ for dataset in "${datasets[@]}"; do
         fi
 
         stamp="$(date +%Y%m%d_%H%M%S)"
-        summary_path="${results_root}/${dataset}_${subset}_${param_slug}_${split}_${stamp}.txt"
 
         echo "------------------------------------------------------------"
         echo "EVAL dataset=${dataset} subset=${subset} split=${split}"
         echo "     params=${param_slug}"
         echo "Input : ${input_path}"
-        echo "Summary-> ${summary_path}"
 
         # Reuse your existing src/eval.py; it expects one input_path
-        python ./src/eval.py --input_path "${input_path}" | tee "${summary_path}"
+        python ./src/eval.py --input_path "${input_path}" 
       done
     done
   done

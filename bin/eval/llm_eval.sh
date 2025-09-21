@@ -1,9 +1,9 @@
 #!/usr/bin/env bash
 # to run:
-#   chmod +x ./bin/eval/lmm_eval.sh
-#   ./bin/eval/lmm_eval.sh
-#   nohup ./bin/eval/lmm_eval.sh > ./logs/eval/lmm_eval_nohup.log 2>&1 &
-#   tail -f ./logs/eval/lmm_eval_nohup.log
+#   chmod +x ./bin/eval/llm_eval.sh
+#   ./bin/eval/llm_eval.sh
+#   nohup ./bin/eval/llm_eval.sh > ./logs/eval/llm_eval_nohup.log 2>&1 &
+#   tail -f ./logs/eval/llm_eval_nohup.log
 
 set -euo pipefail
 
