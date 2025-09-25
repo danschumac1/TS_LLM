@@ -20,6 +20,8 @@ from utils.argparsers import baseline_parse_args
 
 def set_up() -> Tuple[argparse.Namespace, Union[GemmaPrompter, HFPrompter, OpenAIPrompter], MasterLogger]:
     args = baseline_parse_args()
+    args.dataset = args.input_path.split("/")[3]
+    args.subset = args.input_path.split("/")[4]
     logger = MasterLogger(log_path="./logs/baseline.log", init=True, clear=True)
 
     os.makedirs(os.path.dirname(args.output_path), exist_ok=True)
@@ -49,7 +51,6 @@ def set_up() -> Tuple[argparse.Namespace, Union[GemmaPrompter, HFPrompter, OpenA
         **shared_kwargs
     )
 
-    logger.info(f"Using {PrompterClass.__name__} with parameters: {shared_kwargs}")
     return args, prompter, logger
 
 def main():

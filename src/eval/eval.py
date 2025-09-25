@@ -15,6 +15,9 @@ kNN-style (no model/shots; hyperparams encoded in folder name):
   ./data/generations/knn_classifier/<dataset>/<subset>/<param_slug>/<split>.jsonl
   e.g. ./data/generations/knn_classifier/TimerBed/CTU/k=1_metric=dtw_band=10_ds=2/test.jsonl
 """
+import sys
+sys.path.append("./src")
+import re
 
 import argparse
 import os
@@ -24,6 +27,12 @@ from typing import Tuple, Dict, List, Optional, Any
 # keep your original import location
 from utils.data_utils import load_jsonl
 
+LETTER_RE = re.compile(r'\b([A-J])\b', flags=re.IGNORECASE)
+EXTRACT_RE = re.compile(
+    r'(?:final\s*answer|the\s*answer\s*is|answer|final|choice)\s*[:\-–]?\s*([A-J])\b',
+    flags=re.IGNORECASE
+)
+
 
 def parse_args():
     p = argparse.ArgumentParser(description="Minimal MCQ eval → TSV (LLM + kNN)")
@@ -31,19 +40,87 @@ def parse_args():
     return p.parse_args()
 
 
-def get_pred_label(pred: Any) -> Optional[str]:
-    # Few-shot dict: {"final_answer": "A", ...}
+def parse_option_map_from_question(q: str) -> Dict[str, str]:
+    """
+    Parse lines like:
+        [A] WALKING
+        [B] WALKING_UPSTAIRS
+    Returns dict mapping normalized option text -> letter, e.g. {'WALKING': 'A', 'WALKING_UPSTAIRS': 'B'}
+    """
+    mapping: Dict[str, str] = {}
+    for m in re.finditer(r'\[([A-J])\]\s*([^\n\r]+)', q, flags=re.IGNORECASE):
+        letter = m.group(1).upper()
+        text = m.group(2).strip().upper()
+        mapping[text] = letter
+    return mapping
+
+
+def get_pred_label(pred: Any, *, question_text: Optional[str] = None) -> Optional[str]:
+    """
+    Extract a single letter A-J from varied LLM outputs.
+    Falls back to mapping option text back to its letter if needed.
+    """
+    # 1) Dict-like variants
     if isinstance(pred, dict):
-        return pred.get("final_answer")
-    # Zero-shot string formats: "The answer is: A" or "FINAL: A"
+        for k in ("final_answer", "answer", "pred_label", "label", "choice", "letter"):
+            val = pred.get(k)
+            if isinstance(val, str):
+                m = LETTER_RE.search(val.strip())
+                if m:
+                    return m.group(1).upper()
+                # maybe the dict stores the option text (e.g., "WALKING")
+                if question_text:
+                    opt_map = parse_option_map_from_question(question_text)
+                    key = val.strip().upper()
+                    if key in opt_map:
+                        return opt_map[key]
+        # sometimes nested
+        for v in pred.values():
+            if isinstance(v, str):
+                m = LETTER_RE.search(v.strip())
+                if m:
+                    return m.group(1).upper()
+
+    # 2) String variants
     if isinstance(pred, str):
         s = pred.strip()
-        if "The answer is:" in s:
-            return s.split("The answer is:")[-1].strip()
-        if "FINAL:" in s:
-            return s.split("FINAL:")[-1].strip()
-        return s.strip()
+        # common prefixed patterns
+        m = EXTRACT_RE.search(s)
+        if m:
+            return m.group(1).upper()
+        # bracketed or lone letter somewhere near the end
+        tail = s[-50:]  # search near the end
+        m2 = LETTER_RE.search(tail)
+        if m2:
+            return m2.group(1).upper()
+        # maybe the model emitted the option text
+        if question_text:
+            opt_map = parse_option_map_from_question(question_text)
+            up = s.upper()
+            # try exact option text match first
+            if up in opt_map:
+                return opt_map[up]
+            # try contains (handles sentences like "I choose WALKING")
+            for opt_text, letter in opt_map.items():
+                if opt_text in up:
+                    return letter
+
     return None
+
+
+# def get_pred_label(pred: Any) -> Optional[str]:
+#     # Few-shot dict: {"final_answer": "A", ...}
+#     if isinstance(pred, dict):
+#         return pred.get("final_answer")
+#     # Zero-shot string formats: "The answer is: A" or "FINAL: A"
+#     if isinstance(pred, str):
+#         s = pred.strip()
+#         if "The answer is:" in s:
+#             return s.split("The answer is:")[-1].strip()
+#         if "FINAL:" in s:
+#             return s.split("FINAL:")[-1].strip()
+#         return s.strip()
+#     return None
 
 
 def _stem(path: str) -> str:
@@ -148,13 +225,12 @@ def main():
     total, correct = 0, 0
     for row in rows:
         total += 1
-        pred = get_pred_label(row.get("PRED"))
+        pred = get_pred_label(row.get("PRED"), question_text=row.get("question"))
         gold = row.get("label")
         pred_norm = (pred or "").strip().upper()
         gold_norm = (str(gold) if gold is not None else "").strip().upper()
         if pred_norm and pred_norm == gold_norm:
             correct += 1
-
     acc = (correct / total) if total else 0.0
 
     # Append to TSV (now with subset + params)

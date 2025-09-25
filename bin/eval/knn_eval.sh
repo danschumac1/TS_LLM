@@ -52,7 +52,7 @@ for dataset in "${datasets[@]}"; do
         echo "Input : ${input_path}"
 
         # Reuse your existing src/eval.py; it expects one input_path
-        python ./src/eval.py --input_path "${input_path}" 
+        python ./src/eval/eval.py --input_path "${input_path}" 
       done
     done
   done

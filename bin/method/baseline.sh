@@ -11,8 +11,8 @@ set -euo pipefail
 
 # === Config ===
 datasets=(
-  MCQ1
-  TimerBed
+  # MCQ1
+  "TimerBed"
   # TSQA
 )
 
@@ -22,8 +22,8 @@ prompts=(
 )
 
 shots=(
-  few_shot
-  zero_shot
+  "fs"
+  # "zs"
 )
 
 # Pick your models here. Llama requires gated access from Meta.
@@ -49,52 +49,53 @@ temperature=0.7
 show_prompt=0         # 1 to echo prompts, 0 to hide
 
 # === Loop ===
-for "$dataset" in "${datasets[@]}"; do
-
-  if [[$dataset == "TimerBed"]]; then
+for dataset in "${datasets[@]}"; do
+  if [[ $dataset == "TimerBed" ]]; then
     subsets=(
-      "CTU"
-      "ECG"
+      # "CTU"
+      # "ECG"
       "EMG"
-      "HAR"
-      "TEE" 
+      # "HAR"
+      # "TEE" 
     )
   else
-    subsets=(
-      "subset"
-      )
+    subsets=("subset")
   fi
   
-  for subset in "${subsets[@]}"; do 
+    for subset in "${subsets[@]}"; do 
+      for model_type in "${model_types[@]}"; do
+        for split in "${splits[@]}"; do
+          for prompt in "${prompts[@]}"; do
+            for shot in "${shots[@]}"; do
 
-    for model_type in "${model_types[@]}"; do
-      for split in "${splits[@]}"; do
-        for prompt in "${prompts[@]}"; do
-          for shot in "${shots[@]}"; do
+              # Your dataset writer saves to: ./data/datasets/<DATASET>/<SPLIT>.jsonl
+              input_path="./data/datasets/${dataset}/${subset}/${split}.jsonl"
+              output_path="./data/generations/${prompt}/${model_type}/${dataset}/${subset}/${shots}/${split}.jsonl"
+              if [[ $shot == "fs" ]]; then
+                prompt_path="./src/utils/prompts/${prompt}/{$dataset}/{$subset}/{$shot}.yaml"
+              else # zs prompts don't go subset deep src/utils/prompts/baseline/TimerBed/zs.yaml
+                prompt_path="./src/utils/prompts/${prompt}/{$dataset}/{$shot}.yaml"
+              fi
 
-            # Your dataset writer saves to: ./data/datasets/<DATASET>/<SPLIT>.jsonl
-            input_path="./data/datasets/${dataset}/${subset}/${split}.jsonl"
-            output_path="./data/generations/${prompt}/${model_type}/${dataset}/${subset}/${shots}/${split}.jsonl"
-            prompt_path="./src/utils/prompts/${prompt}/${shot}.yaml"
+              echo "------------------------------------------------------------"
+              echo "Running split=${split} | dataset=${dataset} | model=${model_type}"
+              echo "Input : ${input_path}"
+              echo "Output: ${output_path}"
+              echo "Args  : batch_size=${batch_size}, device_map=${device_map}, temp=${temperature}, show_prompt=${show_prompt}"
 
-            echo "------------------------------------------------------------"
-            echo "Running split=${split} | dataset=${dataset} | model=${model_type}"
-            echo "Input : ${input_path}"
-            echo "Output: ${output_path}"
-            echo "Args  : batch_size=${batch_size}, device_map=${device_map}, temp=${temperature}, show_prompt=${show_prompt}"
+              # Ensure output directory exists
+              mkdir -p "$(dirname "${output_path}")"
 
-            # Ensure output directory exists
-            mkdir -p "$(dirname "${output_path}")"
-
-            python ./src/method/baseline.py \
-              --input_path "${input_path}" \
-              --prompt_path "${prompt_path}" \
-              --output_path "${output_path}" \
-              --model_type "${model_type}" \
-              --batch_size "${batch_size}" \
-              --temperature "${temperature}" \
-              --device_map "${device_map}" \
-              --show_prompt "${show_prompt}"
+              python ./src/method/baseline.py \
+                --input_path "${input_path}" \
+                --prompt_path "${prompt_path}" \
+                --output_path "${output_path}" \
+                --model_type "${model_type}" \
+                --batch_size "${batch_size}" \
+                --temperature "${temperature}" \
+                --device_map "${device_map}" \
+                --show_prompt "${show_prompt}"
+            done
           done
         done
       done

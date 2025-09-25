@@ -15,7 +15,7 @@ datasets=(
 )
 
 methods=( # method really
-  # baseline
+  baseline
   vl_time
 )
 
@@ -81,7 +81,7 @@ for dataset in "${datasets[@]}"; do
             fi
 
             # Run eval; print to stdout and also save a small summary file
-            python ./src/eval.py --input_path "${input_path}" 
+            python ./src/eval/eval.py --input_path "${input_path}" 
 
           done
         done

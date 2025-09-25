@@ -11,7 +11,7 @@ set -euo pipefail
 debug=0
 debug_prints=0
 shots=(
-  "zs"
+  # "zs"
   "fs"
   )
 # shots="zs"
@@ -46,10 +46,10 @@ splits=(
 for dataset in "${datasets[@]}"; do
   if [[ "$dataset" == "TimerBed" ]]; then
     subsets=(
-      "CTU"
-      "ECG"
-      "EMG"
-      "HAR"
+      # "CTU"
+      # "ECG"
+      # "EMG"
+      # "HAR"
       "TEE" 
     )
   else

@@ -22,12 +22,25 @@ class BaselineBM(BaseModel):
         ...,
         description="One uppercase letter A–J corresponding to the selected option."
     )
+    answer_string: str = Field(
+        ...,
+        min_length=1,
+        max_length=100,
+        description="Text of the selected option (e.g., 'WALKING'); mirrors the letter in final_answer."
+    )
+
 
     # --- Field validators (v2) ---
     @field_validator("rationale")
     @classmethod
     def _trim_rationale(cls, v: str) -> str:
         return " ".join(v.strip().split())
+    
+    @field_validator("answer_string")
+    @classmethod
+    def _trim_answer_string(cls, v: str) -> str:
+        return " ".join(v.strip().split())
+
 
     @field_validator("option_scores")
     @classmethod
