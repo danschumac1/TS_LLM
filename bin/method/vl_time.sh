@@ -46,12 +46,14 @@ splits=(
 for dataset in "${datasets[@]}"; do
   if [[ "$dataset" == "TimerBed" ]]; then
     subsets=(
+      "_TINYTEST"
       # "CTU"
       # "ECG"
       # "EMG"
       # "HAR"
-      "TEE" 
+      # "TEE" 
     )
+
   else
     subsets=(
       "subset"

@@ -191,6 +191,12 @@ class Prompter(ABC):
             if isinstance(qa.answer, BaseModel):
                 qa.answer = qa.answer.model_dump_json()
 
+    def add_examples_posthoc(self, examples: List[QAs]):
+        """Allows adding examples after initialization."""
+        self.examples.extend(examples)
+        self.format_examples()
+        
+
     @abstractmethod
     def parse_output(self, llm_output: str):
         """Extract response-text from the LLM output"""
@@ -234,18 +240,19 @@ class OpenAIPrompter(Prompter):
         input_dict["__image__"] = f"data:image/png;base64,{base64_img}"
 
 
-    def _build_messages(self, input_texts: Dict[str, str]):
-        """Builds the messages list for the OpenAI API with few-shot examples and the final input."""
+    def _build_messages(self, input_texts: Dict[str, str], override_examples: List[QAs] | None = None):
         messages = [{"role": "system", "content": self.system_prompt}]
+        examples = override_examples if override_examples is not None else self.examples
 
         # Add few-shot examples (already pre-formatted)
-        for qa in self.examples:
+        for qa in examples:
             messages.append(
                 {"role": "user", "content": f"{self.main_prompt_header}\n{qa.question}"}
-            )
+                )
             messages.append(
                 {"role": "assistant", "content": qa.answer}
-            )
+                )
+
 
         # Format final user input
         user_input_prompt = self.format_q_as_string(input_texts)
@@ -270,27 +277,88 @@ class OpenAIPrompter(Prompter):
 
         return messages
 
+    def format_examples_static(self, examples: List[QAs]) -> List[QAs]:
+        """Return a formatted copy of examples without mutating self.examples."""
+        from copy import deepcopy
+        formatted = deepcopy(examples)
+        for qa in formatted:
+            qa.question = self.format_q_as_string(qa.question)
+            if isinstance(qa.answer, BaseModel):
+                qa.answer = qa.answer.model_dump_json()
+        return formatted
+
+
     def get_completion(
         self,
         input_texts: Union[Dict[str, str], List[Dict[str, str]]],
         parse: bool = True,
         verbose: bool = False,
         max_workers: int = 10,
-        sleep_between: float = 0.0
+        sleep_between: float = 0.0,
+        per_input_examples: Optional[List[List[QAs]]] = None,
+        request_timeout: float = 60.0,
     ) -> Union[dict, List[Union[dict, str]]]:
         """
-        Unified completion method for both single and batched (threaded) OpenAI API calls.
-        Explicitly handles threading-related failures only.
+        Unified completion for single or batched OpenAI chat calls.
+
+        Parameters
+        ----------
+        input_texts : dict | list[dict]
+            A single input dict or a list of input dicts. Each dict is the fields your prompt expects,
+            e.g. {"question": {"question": "...", "context": "..."}}
+        parse : bool, default True
+            If True, parse response via self.parse_output(). If False, return raw response object.
+        verbose : bool, default False
+            If True, pretty-print parsed outputs.
+        max_workers : int, default 10
+            Max threads for batched requests.
+        sleep_between : float, default 0.0
+            Optional sleep (seconds) before each request (useful for rate limiting).
+        per_input_examples : list[list[QAs]] | None, default None
+            Optional few-shot examples per input. If provided, length must equal len(input_texts).
+            Each inner list is formatted into user/assistant pairs ONLY for that specific input.
+        request_timeout : float, default 60.0
+            Timeout (seconds) for each future.result() call.
+
+        Returns
+        -------
+        dict | list[dict|str]
+            Parsed result for single input, or a list of parsed results for batched inputs.
+            On errors, an item may be a dict like {"error": "..."}.
         """
 
+        # Normalize to list for a unified path
         if isinstance(input_texts, dict):
             input_texts = [input_texts]
 
-        def call_single(i: int, input_dict: Dict[str, str]):
+        n = len(input_texts)
+
+        # Validate per-input examples shape if provided
+        if per_input_examples is not None and len(per_input_examples) != n:
+            raise ValueError("per_input_examples must be the same length as input_texts.")
+
+        # Helper: format examples without mutating self.examples (thread-safe)
+        def _format_examples_static(examples: List[QAs]) -> List[QAs]:
+            from copy import deepcopy
+            formatted = deepcopy(examples)
+            for qa in formatted:
+                # qa.question is a Dict[str, str]
+                qa.question = self.format_q_as_string(qa.question)
+                if isinstance(qa.answer, BaseModel):
+                    qa.answer = qa.answer.model_dump_json()
+            return formatted
+
+        # Worker to call API for a single input
+        def call_single(i: int, input_dict: Dict[str, str], local_examples: Optional[List[QAs]]):
             if sleep_between > 0:
                 time.sleep(sleep_between)
 
-            messages = self._build_messages(input_dict)
+            # Format per-input examples if provided
+            formatted_local_examples = _format_examples_static(local_examples) if local_examples else None
+
+            # Build messages (use override examples when provided)
+            messages = self._build_messages(input_dict, override_examples=formatted_local_examples)
+
             completion_kwargs = {
                 "model": self.llm_model,
                 "messages": messages,
@@ -300,33 +368,40 @@ class OpenAIPrompter(Prompter):
                 completion_kwargs["response_format"] = {"type": "json_object"}
 
             response = self.client.chat.completions.create(**completion_kwargs)
-
             parsed = self.parse_output(response) if parse else response
 
             if verbose:
                 print(f"\n=== OUTPUT {i} ===")
-                print(json.dumps(parsed, indent=2))
+                try:
+                    print(json.dumps(parsed, indent=2))
+                except TypeError:
+                    # Fallback if parsed is not JSON-serializable (e.g., raw response object)
+                    print(parsed)
 
             return i, parsed
 
-        results = [None] * len(input_texts)
+        results: List[Optional[Union[dict, str]]] = [None] * n
 
+        # Launch threaded batch
         with ThreadPoolExecutor(max_workers=max_workers) as executor:
-            futures = [executor.submit(call_single, i, input_texts[i]) for i in range(len(input_texts))]
+            futures = []
+            for i, inp in enumerate(input_texts):
+                local_ex = per_input_examples[i] if per_input_examples is not None else None
+                futures.append(executor.submit(call_single, i, inp, local_ex))
 
             for future in as_completed(futures):
                 try:
-                    i, result = future.result(timeout=60)
+                    i, result = future.result(timeout=request_timeout)
                     results[i] = result
                 except TimeoutError:
                     results[i] = {"error": "TimeoutError: request took too long"}
                 except openai.OpenAIError as e:
                     results[i] = {"error": f"OpenAIError: {str(e)}"}
                 except Exception as e:
-                    # Only catch unexpected thread-level issues; let your own code bugs bubble up
                     results[i] = {"error": f"UnexpectedError: {type(e).__name__}: {str(e)}"}
 
-        return results[0] if len(results) == 1 else results
+        # Return single element or list
+        return results[0] if n == 1 else results
 
 class HFPrompter(Prompter):
     def __init__(

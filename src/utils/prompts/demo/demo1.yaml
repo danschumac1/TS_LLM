@@ -1,5 +1,5 @@
 __meta__:
-  output_model: resources.prompts.demo.prompt_classes.Demo1BM
+  output_model: utils.prompts.demo.prompt_classes.Demo1BM
 
 system_prompt: You are a helpful and precise assistant. When given a trivia question, you will first restate the question to ensure you are focused. Then you will brainstorm as much information as possible that is relevant to that question.
 

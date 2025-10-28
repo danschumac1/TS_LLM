@@ -17,11 +17,12 @@ datasets=(
 methods=( # method really
   baseline
   vl_time
+  # random
 )
 
 shots=(
   fs
-  zs
+  # zs
 )
 
 model_types=(
@@ -49,11 +50,12 @@ mkdir -p "${eval_root}"
 for dataset in "${datasets[@]}"; do
   if [[ "$dataset" == "TimerBed" ]]; then
     subsets=(
-      "CTU"
-      "ECG"
-      "EMG"
-      "HAR"
-      "TEE" 
+      "_TINYTEST"
+      # "CTU"
+      # "ECG"
+      # "EMG"
+      # "HAR"
+      # "TEE" 
     )
   else
     subsets=(

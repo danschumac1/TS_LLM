@@ -22,7 +22,15 @@ mkdir -p "${gen_root}"
 
 for dataset in "${datasets[@]}"; do
   if [[ "${dataset}" == "TimerBed" ]]; then
-    subsets=("CTU" "ECG" "EMG" "HAR" "TEE")
+    subsets=(
+      "_TINYTEST"
+      # "CTU"
+      # "ECG"
+      # "EMG"
+      # "HAR"
+      # "TEE" 
+    )
+
   else
     subsets=("subset")
   fi

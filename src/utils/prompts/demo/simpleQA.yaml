@@ -1,0 +1,8 @@
+__meta__:
+  output_model: str
+
+system_prompt: |
+   You are a helpful assistant. Answer the question.
+
+main_prompt_header: |
+   Answer the question.

@@ -17,6 +17,9 @@ sentencepiece
 soundfile
 matplotlib
 sktime
+statsmodels
+MissForest
+lightgbm
 # remember to run
 # hf auth login
 # export PYTHONPATH=$(pwd)

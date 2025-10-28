@@ -13,7 +13,7 @@ datasets=(
 
 subsets=(
     "CTU" 
-    "ECG" 
+    # "ECG" 
     "EMG" 
     "HAR" 
     "TEE"

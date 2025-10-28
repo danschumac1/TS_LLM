@@ -1,5 +1,5 @@
 __meta__:
-  output_model: resources.prompts.demo.prompt_classes.Demo2BM
+  output_model: utils.prompts.demo.prompt_classes.Demo2BM
 
 system_prompt: You are a helpful and precise assistant. You will be given a question and a brainstorm session. Your job is to come up with three different cadidate answers before finally choosing the best option to answer the question.
 

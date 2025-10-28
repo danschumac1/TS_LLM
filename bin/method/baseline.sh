@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# 3218600
+# 945026
 # to run:
 #   chmod +x ./bin/method/baseline.sh
 #   ./bin/method/baseline.sh
@@ -7,7 +7,7 @@
 #   tail -f ./logs/method/baseline_nohup.log 2>&1 &
 
 
-set -euo pipefail
+# set -euo pipefail
 
 # === Config ===
 datasets=(
@@ -18,7 +18,7 @@ datasets=(
 
 
 prompts=(
-  baseline
+  "baseline"
 )
 
 shots=(
@@ -46,15 +46,16 @@ splits=(
 batch_size=16
 device_map=(0)         # single GPU id; baseline.py expects a list, but one value is fine
 temperature=0.7
-show_prompt=0         # 1 to echo prompts, 0 to hide
+show_prompt=1         # 1 to echo prompts, 0 to hide
 
 # === Loop ===
 for dataset in "${datasets[@]}"; do
   if [[ $dataset == "TimerBed" ]]; then
     subsets=(
+      "_TINYTEST"
       # "CTU"
       # "ECG"
-      "EMG"
+      # "EMG"
       # "HAR"
       # "TEE" 
     )
@@ -71,11 +72,12 @@ for dataset in "${datasets[@]}"; do
               # Your dataset writer saves to: ./data/datasets/<DATASET>/<SPLIT>.jsonl
               input_path="./data/datasets/${dataset}/${subset}/${split}.jsonl"
               output_path="./data/generations/${prompt}/${model_type}/${dataset}/${subset}/${shots}/${split}.jsonl"
-              if [[ $shot == "fs" ]]; then
-                prompt_path="./src/utils/prompts/${prompt}/{$dataset}/{$subset}/{$shot}.yaml"
-              else # zs prompts don't go subset deep src/utils/prompts/baseline/TimerBed/zs.yaml
-                prompt_path="./src/utils/prompts/${prompt}/{$dataset}/{$shot}.yaml"
-              fi
+              prompt_path="./src/utils/prompts/baseline/zs.yaml"
+              # if [[ $shot == "fs" ]]; then
+              #   prompt_path="./src/utils/prompts/${prompt}/${dataset}/${subset}/${shot}.yaml"
+              # else # zs prompts don't go subset deep src/utils/prompts/baseline/TimerBed/zs.yaml
+              #   prompt_path="./src/utils/prompts/${prompt}/{$dataset}/{$shot}.yaml"
+              # fi
 
               echo "------------------------------------------------------------"
               echo "Running split=${split} | dataset=${dataset} | model=${model_type}"
@@ -101,4 +103,3 @@ for dataset in "${datasets[@]}"; do
       done
     done
   done
-done

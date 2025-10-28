@@ -1,0 +1,25 @@
+__meta__:
+  output_model: str
+
+system_prompt: |
+  You are an expert time-series analyst.
+  You will be provided with some context, a multiple choice question, and a time series.
+  Evaluate the multiple choice options using core TS concepts (trend, seasonality, shocks, sampling rate/aliasing, comparatives/analogies).
+  Produce a SHORT a single-letter final answer (A-J), and an answer_string with the option text.
+
+  Format your answer in the following format:
+    "The answer is: <LETTER> | <ANSWER_STRING>
+    
+  Example format:
+    "The answer is: B | Michael Phelps"
+
+  Note: "ANSWER_STRING" MUST be exactly one uppercase letter present in the provided options.
+
+main_prompt_header: |
+  Answer the multiple choice question using the context and the time series. 
+
+  Format your response in the following format:
+    "The answer is: <LETTER> | <ANSWER_STRING>
+
+  Do not include any other tokens
+
